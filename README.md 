@@ -1,0 +1,49 @@
+# Simple Extensible Calculator
+
+## Overview
+
+This is a simple, extensible calculator implemented in Java. It supports basic arithmetic operations and allows for easy extension to add new operations without modifying the existing `Calculator` class, adhering to the Open-Closed Principle.
+
+## Features
+
+- **Operations**: Supports addition, subtraction, multiplication, and division.
+- **Basic Calculation**: Perform single operations between two numbers.
+- **Chaining Operations**: Chain multiple operations on a single value, similar to a basic calculator.
+- **Extensibility**: Easily add new operations without modifying the `Calculator` class.
+- **IoC Compatibility**: Designed to be compatible with Inversion of Control (IoC) containers, allowing for external management of dependencies.
+- **Error Handling**: Gracefully handles invalid or unsupported operations.
+
+## Design Decisions and Assumptions
+
+- **Operation Map Injection**: The `Calculator` class uses a `Map<Operation, BiFunction<Number, Number, Number>>` to store operation implementations. This map is injected via the constructor, making the class compatible with IoC containers.
+- **Open-Closed Principle**: New operations can be added by extending the `Operation` enum and adding corresponding implementations to the operation map, without modifying the `Calculator` class.
+- **Chaining Operations**: The `ChainCalculator` inner class allows users to perform a series of operations on an initial value.
+- **Error Handling**: If an unsupported operation is requested, the calculator throws an `UnsupportedOperationException` with a meaningful message. Division by zero results in an `ArithmeticException`.
+- **Number Handling**: All numerical calculations are performed using `double` values for simplicity.
+
+## Usage
+
+```java
+// Initialize the operation map
+Map<Operation, BiFunction<Number, Number, Number>> operationMap = new HashMap<>();
+operationMap.put(Operation.ADD, (a, b) -> a.doubleValue() + b.doubleValue());
+operationMap.put(Operation.SUBTRACT, (a, b) -> a.doubleValue() - b.doubleValue());
+operationMap.put(Operation.MULTIPLY, (a, b) -> a.doubleValue() * b.doubleValue());
+operationMap.put(Operation.DIVIDE, (a, b) -> {
+    if (b.doubleValue() == 0) {
+        throw new ArithmeticException("Division by zero");
+    }
+    return a.doubleValue() / b.doubleValue();
+});
+
+// Create a calculator instance
+Calculator calculator = new Calculator(operationMap);
+
+// Perform a basic calculation
+Number result = calculator.calculate(Operation.ADD, 2, 3); // Result: 5.0
+
+// Chain multiple operations
+Calculator.ChainCalculator chainCalc = new Calculator.ChainCalculator(calculator, 5);
+Number chainResult = chainCalc.perform(Operation.ADD, 3)
+                              .perform(Operation.MULTIPLY, 2)
+                              .getResult(); // Result: 16.0
